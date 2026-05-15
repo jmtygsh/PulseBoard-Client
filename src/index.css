@@ -128,3 +128,18 @@
     @apply font-sans;
     }
 }
+
+/* Custom Scrollbar Styles for cross-browser support without tailwind-scrollbar plugin */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #27272a; /* zinc-800 */
+    border-radius: 10px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: #3f3f46; /* zinc-700 */
+}

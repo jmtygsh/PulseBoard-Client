@@ -1,50 +1,12 @@
-import { StrictMode, createContext, useContext, useState, useEffect } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import './index.css';
 
-
-const AuthContext = createContext(null);
-
-const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || 'null'));
-
-  // Update localStorage whenever the token changes
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem('token', token);
-    } else {
-      localStorage.removeItem('token');
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
-
-  const storeToken = (newToken, userData) => {
-    setToken(newToken);
-    if (userData) setUser(userData);
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ token, user, storeToken, logout, isAuthenticated: !!token }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => useContext(AuthContext);
+import App from '@/App';
+import { Homepage, Loginpage, Registerpage, CreatePoll, Dashboard, LiveDashboard, SubmitVote } from '@/pages/index';
+import { AuthProvider } from '@/hooks/useAuth';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const router = createBrowserRouter([
   {
@@ -53,31 +15,37 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <Home />,
+        element: <Homepage />,
       },
       {
         path: '/login',
-        element: <Login />,
+        element: <Loginpage />,
       },
       {
         path: '/register',
-        element: <Register />,
+        element: <Registerpage />,
       },
       {
-        path: '/verify-email',
-        element: <VerifyEmail />,
+        path: '/dashboard/submit-vote',
+        element: <SubmitVote />,
       },
       {
-        path: '/dashboard',
-        element: <Dashboard />,
-      },
-      {
-        path: '/poll/:slug',
-        element: <Poll />,
-      },
-      {
-        path: '/analytics/:slug',
-        element: <Analytics />,
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: '/create-poll',
+            element: <CreatePoll />,
+          },
+          {
+            path: '/dashboard',
+            element: <Dashboard />,
+          },
+          {
+            path: '/dashboard/live/poll',
+            element: <LiveDashboard />,
+          },
+
+        ],
       },
     ],
   },
