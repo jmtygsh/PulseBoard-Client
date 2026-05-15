@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
 
 export function LoginForm({
   className,
@@ -42,10 +43,12 @@ export function LoginForm({
       });
 
       if (response.data.success) {
+        toast.success("Successfully logged in!");
         login(response.data.data.accessToken);
         navigate("/dashboard");
       }
     } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to login. Please try again.");
       setError(err.response?.data?.message || "Failed to login. Please try again.");
     } finally {
       setIsLoading(false);

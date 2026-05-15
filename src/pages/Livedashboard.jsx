@@ -164,7 +164,7 @@ export default function LiveDashboard() {
 
             {/* Question Breakdown */}
             <div className="space-y-6 mt-8">
-                <h3 className="text-2xl font-semibold border-b border-zinc-800 pb-2">Question Breakdown</h3>
+                <h3 className="text-2xl font-semibold pb-2">Question Breakdown</h3>
 
                 {poll?.questions?.map((q, idx) => {
                     const chartData = q.options.map(opt => ({

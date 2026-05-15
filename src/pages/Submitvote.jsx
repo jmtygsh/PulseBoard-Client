@@ -4,6 +4,7 @@ import api from '@/api/axios';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function SubmitVote() {
     const [searchParams] = useSearchParams();
@@ -17,11 +18,21 @@ export default function SubmitVote() {
     const [error, setError] = useState(null);
     const [isSuccess, setIsSuccess] = useState(false);
 
+    const [isExpired, setIsExpired] = useState(false);
+
     useEffect(() => {
         const fetchPoll = async () => {
             try {
                 const response = await api.get(`/api/polls/questions/${slug}`);
-                setPoll(response.data.data || response.data);
+                const pollData = response.data.data || response.data;
+                setPoll(pollData);
+
+                // Check if the poll is expired based on the fetched data
+                if (pollData.expiresAt && new Date() > new Date(pollData.expiresAt)) {
+                    setIsExpired(true);
+                } else if (pollData.status === "expired") {
+                    setIsExpired(true);
+                }
             } catch (err) {
                 setError(err.response?.data?.message || "Failed to load poll questions.");
             } finally {
@@ -44,6 +55,7 @@ export default function SubmitVote() {
         const missingRequired = requiredQuestions.some(q => !answers[q._id]);
 
         if (missingRequired) {
+            toast.error("Please answer all required questions before submitting.");
             setError("Please answer all required questions before submitting.");
             return;
         }
@@ -64,8 +76,10 @@ export default function SubmitVote() {
             };
 
             await api.post(`/api/polls/answers/${slug}`, payload);
+            toast.success("Your vote has been submitted successfully!");
             setIsSuccess(true);
         } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to submit vote. Please try again.");
             setError(err.response?.data?.message || "Failed to submit vote. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -117,6 +131,12 @@ export default function SubmitVote() {
             <div className="space-y-2 border-b border-white/10 pb-6">
                 <h1 className="text-3xl font-bold text-orange-500">{poll?.title || 'Poll'}</h1>
                 {poll?.description && <p className="text-slate-400">{poll.description}</p>}
+
+                {isExpired && (
+                    <div className="inline-block mt-4 bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-md text-sm font-semibold uppercase tracking-wider">
+                        This poll has expired
+                    </div>
+                )}
             </div>
 
             {error && (
@@ -169,6 +189,7 @@ export default function SubmitVote() {
                     onClick={handleSubmit}
                     disabled={
                         isSubmitting ||
+                        isExpired ||
                         (poll?.questions && poll.questions.filter(q => q.isRequired).some(q => !answers[q._id]))
                     }
                     className="bg-orange-600 hover:bg-orange-700 text-white w-full sm:w-auto px-8 py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
@@ -178,6 +199,8 @@ export default function SubmitVote() {
                             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                             Submitting...
                         </>
+                    ) : isExpired ? (
+                        'Poll Expired'
                     ) : (
                         'Submit Vote'
                     )}

@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 
 import App from '@/App';
-import { Homepage, Loginpage, Registerpage, CreatePoll, Dashboard, LiveDashboard, SubmitVote } from '@/pages/index';
+import { Homepage, Loginpage, Registerpage, CreatePoll, Dashboard, LiveDashboard, SubmitVote, VerifyEmail } from '@/pages/index';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
@@ -27,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: '/register',
         element: <Registerpage />,
+      },
+      {
+        path: '/verify-email/:token',
+        element: <VerifyEmail />,
       },
       {
         path: '/dashboard/submit-vote',

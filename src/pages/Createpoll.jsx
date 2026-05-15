@@ -16,6 +16,8 @@ import {
 import Header from '@/components/Header';
 import api from '@/api/axios';
 
+import { toast } from 'sonner';
+
 // Factory functions replace repetitive inline objects
 const newId = () => Math.random().toString(36).slice(2);
 const newOption = () => ({ id: newId(), text: '' });
@@ -169,11 +171,13 @@ function CreatePoll() {
             console.log(response);
 
             if (response.data.success) {
+                toast.success('Event has been created successfully!');
                 // The backend response object puts the ID in response.data.data._id
                 const newPollId = response.data.data.shareSlug;
                 navigate(`/dashboard/live/poll?id=${newPollId}`);
             }
         } catch (err) {
+            toast.error(err?.response?.data?.message || 'Failed to save poll.');
             setError(err?.response?.data?.message || 'Failed to save poll.');
         } finally {
             setIsLoading(false);
