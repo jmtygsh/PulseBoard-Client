@@ -16,12 +16,19 @@ export default function LiveDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [copied, setCopied] = useState(false);
+    const [isExpired, setIsExpired] = useState(false);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
                 const pollResponse = await api.get(`/api/polls/analytics/${id}`);
-                setPoll(pollResponse.data.data);
+                const pollData = pollResponse.data.data;
+                setPoll(pollData);
+
+                // Check if expired
+                if ((pollData.expiresAt && new Date() > new Date(pollData.expiresAt)) || pollData.status === "expired") {
+                    setIsExpired(true);
+                }
             } catch (err) {
                 setError("Failed to load poll analytics.");
             } finally {
@@ -31,70 +38,75 @@ export default function LiveDashboard() {
 
         if (id) fetchAnalytics();
 
-        // Socket.io connection for real-time updates
-        const socket = io(import.meta.env.VITE_API_URL, {
-            withCredentials: true,
-        });
-
-        socket.on("connect", () => {
-            console.log("Connected to socket server");
-            if (id) {
-                socket.emit("join_poll", id);
-            }
-        });
-
-        socket.on("connect_error", (err) => {
-            console.error("Socket connection error:", err);
-        });
-
-        socket.on("new_response", (update) => {
-            console.log("Received new response update via socket:", update);
-            setPoll(prevPoll => {
-                if (!prevPoll) return prevPoll;
-
-                const { isAuth, data } = update;
-                const newPoll = { ...prevPoll };
-
-                // Clone responses object to mutate
-                newPoll.responses = { ...prevPoll.responses };
-                newPoll.responses.total += 1;
-                if (isAuth) {
-                    newPoll.responses.auth += 1;
-                } else {
-                    newPoll.responses.ano += 1;
-                }
-
-                // Deep clone questions to mutate
-                newPoll.questions = prevPoll.questions.map(q => {
-                    const answerForQuestion = data.answers.find(a => a.questionId === q.id);
-                    if (!answerForQuestion) return q;
-
-                    return {
-                        ...q,
-                        options: q.options.map(opt => {
-                            if (opt.id === answerForQuestion.selectedOptionId) {
-                                const newVoteCount = { ...opt.voteCount };
-                                newVoteCount.total += 1;
-                                if (isAuth) {
-                                    newVoteCount.auth += 1;
-                                } else {
-                                    newVoteCount.ano += 1;
-                                }
-                                return { ...opt, voteCount: newVoteCount };
-                            }
-                            return opt;
-                        })
-                    };
-                });
-
-                return newPoll;
+        // Only connect to socket if the poll is NOT expired
+        let socket;
+        if (!isExpired) {
+            socket = io(import.meta.env.VITE_API_URL, {
+                withCredentials: true,
             });
-        });
+
+            socket.on("connect", () => {
+                console.log("Connected to socket server");
+                if (id) {
+                    socket.emit("join_poll", id);
+                }
+            });
+
+            socket.on("connect_error", (err) => {
+                // console.error("Socket connection error:", err);
+            });
+
+            socket.on("new_response", (update) => {
+                setPoll(prevPoll => {
+                    if (!prevPoll) return prevPoll;
+
+                    const { isAuth, data } = update;
+                    const newPoll = { ...prevPoll };
+
+                    // Clone responses object to mutate
+                    newPoll.responses = { ...prevPoll.responses };
+                    newPoll.responses.total += 1;
+                    if (isAuth) {
+                        newPoll.responses.auth += 1;
+                    } else {
+                        newPoll.responses.ano += 1;
+                    }
+
+                    // Deep clone questions to mutate
+                    newPoll.questions = prevPoll.questions.map(q => {
+                        const answerForQuestion = data.answers.find(a => a.questionId === q.id);
+                        if (!answerForQuestion) return q;
+
+                        return {
+                            ...q,
+                            options: q.options.map(opt => {
+                                if (opt.id === answerForQuestion.selectedOptionId) {
+                                    const newVoteCount = { ...opt.voteCount };
+                                    newVoteCount.total += 1;
+                                    if (isAuth) {
+                                        newVoteCount.auth += 1;
+                                    } else {
+                                        newVoteCount.ano += 1;
+                                    }
+                                    return { ...opt, voteCount: newVoteCount };
+                                }
+                                return opt;
+                            })
+                        };
+                    });
+
+                    return newPoll;
+                });
+            });
+        }
 
         return () => {
-            socket.disconnect();
+            if (socket) {
+                socket.emit("leave_poll", id); // Optional: if you have a leave_poll event on the backend
+                socket.disconnect();
+            }
         };
-    }, [id]);
+    }, [id, isExpired]);
 
     const shareableUrl = `${window.location.origin}/dashboard/submit-vote?id=${id}`;
 

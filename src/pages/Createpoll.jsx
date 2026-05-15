@@ -168,8 +168,6 @@ function CreatePoll() {
             // Remove savedPollId logic entirely since there is no update endpoint
             const response = await api.post('/api/polls/create', payload);
 
-            console.log(response);
-
             if (response.data.success) {
                 toast.success('Event has been created successfully!');
                 // The backend response object puts the ID in response.data.data._id

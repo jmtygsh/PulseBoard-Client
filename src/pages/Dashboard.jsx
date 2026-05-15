@@ -84,8 +84,20 @@ export default function Dashboard() {
 
             // Select another poll if available
             setSelectedPoll(updatedPolls.length > 0 ? updatedPolls[0] : null);
+            setIsDeleteDialogOpen(false); // Close dialog on success
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to delete poll");
+        }
+    };
+
+    const handleMakePublic = async () => {
+        if (!selectedPoll) return;
+
+        try {
+            const response = await api.post(`/api/polls/public/${selectedPoll.id}`);
+            toast.success(response.data.message || "Poll results are now public!");
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to make poll public");
         }
     };
 
@@ -240,33 +252,42 @@ export default function Dashboard() {
                                                 Copy Link
                                             </Button>
 
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleMakePublic}
+                                                className="bg-transparent border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400"
+                                            >
+                                                Make it Public
+                                            </Button>
 
-
-                                            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-red-500 hover:text-red-400 hover:bg-red-500/10 ml-auto"
-                                                    >
-                                                        <Trash2 size={16} className="mr-1.5" />
-                                                        Delete
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent className="bg-zinc-950 border border-zinc-800 text-white">
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription className="text-zinc-400">
-                                                            This action cannot be undone. This will permanently delete your poll
-                                                            and remove its data from our servers.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel className="bg-transparent border-zinc-800 hover:bg-zinc-900 text-white">Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white">Continue</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                            <div className="flex gap-2 ml-auto">
+                                                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                                        >
+                                                            <Trash2 size={16} className="mr-1.5" />
+                                                            Delete
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent className="bg-zinc-950 border border-zinc-800 text-white">
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription className="text-zinc-400">
+                                                                This action cannot be undone. This will permanently delete your poll
+                                                                and remove its data from our servers.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel className="bg-transparent border-zinc-800 hover:bg-zinc-900 text-white">Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white">Continue</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>
