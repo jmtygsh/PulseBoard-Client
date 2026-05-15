@@ -1,12 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 
 import App from '@/App';
 import { Homepage, Loginpage, Registerpage, CreatePoll, Dashboard, LiveDashboard, SubmitVote } from '@/pages/index';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+import { ErrorBoundary } from 'react-error-boundary';
+import ErrorPage from '@/components/ErrorPage';
 
 const router = createBrowserRouter([
   {
@@ -53,8 +56,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <ErrorBoundary FallbackComponent={ErrorPage}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>
 );
