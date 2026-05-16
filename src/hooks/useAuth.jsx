@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from 'react';
-
+import api from '@/api/axios';
+import { toast } from 'sonner';
 
 const AuthContext = createContext(null);
 
@@ -11,9 +12,18 @@ export const AuthProvider = ({ children }) => {
     setToken(newToken);
   };
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    setToken(null);
+  const logout = async () => {
+    try {
+      if (token) {
+        await api.post('/api/auth/logout');
+      }
+    } catch (error) {
+      console.error("Logout error", error);
+    } finally {
+      localStorage.removeItem('access_token');
+      setToken(null);
+      toast.success("Logged out successfully");
+    }
   };
 
   return (
